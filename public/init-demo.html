@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Investment Club - Initialize Demo Data</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .info-box {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 5px;
+        }
+        
+        .info-box p {
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+        
+        .info-box strong {
+            color: #667eea;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 5px;
+        }
+        
+        .warning-box p {
+            color: #856404;
+            line-height: 1.6;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .result {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        
+        .result h3 {
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .result pre {
+            background: rgba(0,0,0,0.05);
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 14px;
+        }
+        
+        .credentials {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        
+        .credential-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .credential-item:last-child {
+            border-bottom: none;
+        }
+        
+        .credential-label {
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .credential-value {
+            color: #333;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Initialize Demo Data</h1>
+        <p class="subtitle">Set up your Investment Club database with admin + 91 members</p>
+        
+        <div class="info-box">
+            <p><strong>What this will do:</strong></p>
+            <p>✅ Create 1 admin account<br>
+               ✅ Create 91 member accounts<br>
+               ✅ Generate random payment data for testing<br>
+               ✅ Set up payment records for all members</p>
+        </div>
+        
+        <div class="warning-box">
+            <p><strong>⚠️ Important:</strong> This should only be run once when first setting up your database. Running it multiple times may create duplicate users.</p>
+        </div>
+        
+        <button id="initButton" onclick="initializeDemoData()">
+            Initialize Demo Data
+        </button>
+        
+        <div class="loader" id="loader"></div>
+        
+        <div class="result" id="result"></div>
+    </div>
+    
+    <script>
+        async function initializeDemoData() {
+            const button = document.getElementById('initButton');
+            const loader = document.getElementById('loader');
+            const result = document.getElementById('result');
+            
+            // Get Supabase credentials from import
+            const projectId = await getProjectId();
+            const anonKey = await getAnonKey();
+            
+            if (!projectId || !anonKey) {
+                showError('Could not load Supabase credentials. Please check your setup.');
+                return;
+            }
+            
+            // Show loading state
+            button.disabled = true;
+            button.textContent = 'Initializing...';
+            loader.style.display = 'block';
+            result.style.display = 'none';
+            
+            try {
+                const response = await fetch(
+                    `https://${projectId}.supabase.co/functions/v1/make-server-f4ff8ddc/init-demo-data`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${anonKey}`
+                        }
+                    }
+                );
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showSuccess(data);
+                } else {
+                    showError(data.error || 'Failed to initialize demo data');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                button.disabled = false;
+                button.textContent = 'Initialize Demo Data';
+                loader.style.display = 'none';
+            }
+        }
+        
+        function showSuccess(data) {
+            const result = document.getElementById('result');
+            result.className = 'result success';
+            result.style.display = 'block';
+            
+            result.innerHTML = `
+                <h3>✅ Success!</h3>
+                <p>${data.message}</p>
+                
+                <div class="credentials">
+                    <h4 style="margin-bottom: 10px;">Admin Login Credentials:</h4>
+                    <div class="credential-item">
+                        <span class="credential-label">Email:</span>
+                        <span class="credential-value">${data.admin.email}</span>
+                    </div>
+                    <div class="credential-item">
+                        <span class="credential-label">Password:</span>
+                        <span class="credential-value">${data.admin.password}</span>
+                    </div>
+                </div>
+                
+                <div class="credentials" style="margin-top: 15px;">
+                    <h4 style="margin-bottom: 10px;">Member Accounts:</h4>
+                    <div class="credential-item">
+                        <span class="credential-label">Created:</span>
+                        <span class="credential-value">${data.members.created} / ${data.members.total}</span>
+                    </div>
+                    <div class="credential-item">
+                        <span class="credential-label">Default Password:</span>
+                        <span class="credential-value">${data.members.defaultPassword}</span>
+                    </div>
+                    <div class="credential-item">
+                        <span class="credential-label">Email Format:</span>
+                        <span class="credential-value">[name]@club.com</span>
+                    </div>
+                </div>
+                
+                <p style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #c3e6cb;">
+                    <strong>🎉 All set!</strong> You can now log in to your Investment Club app.
+                </p>
+            `;
+        }
+        
+        function showError(message) {
+            const result = document.getElementById('result');
+            result.className = 'result error';
+            result.style.display = 'block';
+            
+            result.innerHTML = `
+                <h3>❌ Error</h3>
+                <p>${message}</p>
+                <p style="margin-top: 15px;">
+                    <strong>Troubleshooting:</strong><br>
+                    • Check browser console (F12) for detailed errors<br>
+                    • Verify Supabase credentials are correct<br>
+                    • Ensure Supabase Edge Functions are deployed<br>
+                    • Try refreshing the page and running again
+                </p>
+            `;
+        }
+        
+        async function getProjectId() {
+            try {
+                const module = await import('/utils/supabase/info');
+                return module.projectId;
+            } catch (e) {
+                console.error('Failed to load projectId:', e);
+                return null;
+            }
+        }
+        
+        async function getAnonKey() {
+            try {
+                const module = await import('/utils/supabase/info');
+                return module.publicAnonKey;
+            } catch (e) {
+                console.error('Failed to load publicAnonKey:', e);
+                return null;
+            }
+        }
+    </script>
+</body>
+</html>
